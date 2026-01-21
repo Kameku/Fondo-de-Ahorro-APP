@@ -733,10 +733,11 @@ const Dashboard = ({ savers, settings, onAddSaver, onSelectSaver, onOpenMenu, is
 
   const calculateProjectedTotal = (saver: Saver) => {
     if (!settings) return 0;
-    const start = new Date(settings.start_date);
-    const end = new Date(settings.end_date);
+    // Parsear fechas directamente para evitar problemas de timezone
+    const [startYear, startMonth] = settings.start_date.split('-').map(Number);
+    const [endYear, endMonth] = settings.end_date.split('-').map(Number);
 
-    const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+    const months = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
     return Math.max(0, months) * 2 * Number(saver.bi_weekly_amount);
   };
 
