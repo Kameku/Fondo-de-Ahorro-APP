@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, User, Mail, Wallet, CheckCircle2, Circle, Calculator, ChevronRight, Lock, Calendar, Menu, X, BarChart3, TrendingUp, DollarSign, PieChart, Settings, Percent, AlertCircle, CalendarDays, AlertTriangle, Bell, BellRing, Loader2, LogOut, Trash2, Download } from 'lucide-react';
+import { Plus, Users, User, Mail, Wallet, CheckCircle2, Circle, Calculator, ChevronRight, Lock, Calendar, Menu, X, BarChart3, TrendingUp, DollarSign, PieChart, Settings, Percent, AlertCircle, CalendarDays, AlertTriangle, Bell, BellRing, Loader2, LogOut, Trash2, Download, Search } from 'lucide-react';
 import { Saver, ViewState, Loan, AppSettings, SavingsMonth, ReportData } from './types';
 import { Header } from './components/Header';
 import { Button } from './components/Button';
@@ -729,6 +729,7 @@ const Dashboard = ({ savers, settings, onAddSaver, onSelectSaver, onOpenMenu, is
   onOpenMenu: () => void,
   isLoading: boolean
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const availableFunds = calculateAvailableFunds(savers);
 
   const calculateProjectedTotal = (saver: Saver) => {
@@ -740,6 +741,11 @@ const Dashboard = ({ savers, settings, onAddSaver, onSelectSaver, onOpenMenu, is
     const months = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
     return Math.max(0, months) * 2 * Number(saver.bi_weekly_amount);
   };
+
+  // Filtrar ahorradores basado en la búsqueda
+  const filteredSavers = savers.filter(saver =>
+    saver.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -779,6 +785,37 @@ const Dashboard = ({ savers, settings, onAddSaver, onSelectSaver, onOpenMenu, is
           <span className="text-xs font-semibold bg-slate-200 text-slate-600 px-2 py-1 rounded-full">{savers.length}</span>
         </div>
 
+        {/* Buscador */}
+        <div className="relative mb-4">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search size={20} className="text-slate-400" />
+          </div>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar ahorrador..."
+            className="w-full pl-12 pr-4 py-3 bg-white rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none text-slate-800 placeholder-slate-400 transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center"
+            >
+              <X size={18} className="text-slate-400 hover:text-slate-600" />
+            </button>
+          )}
+        </div>
+
+        {/* Resultados de búsqueda */}
+        {searchQuery && (
+          <p className="text-sm text-slate-500 mb-3">
+            {filteredSavers.length === 0
+              ? 'No se encontraron resultados'
+              : `${filteredSavers.length} resultado${filteredSavers.length !== 1 ? 's' : ''}`}
+          </p>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
@@ -790,8 +827,19 @@ const Dashboard = ({ savers, settings, onAddSaver, onSelectSaver, onOpenMenu, is
                 <Users className="mx-auto text-slate-300 mb-3" size={48} />
                 <p className="text-slate-500">No hay ahorradores aún.</p>
               </div>
+            ) : filteredSavers.length === 0 ? (
+              <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-slate-300">
+                <Search className="mx-auto text-slate-300 mb-3" size={48} />
+                <p className="text-slate-500">No se encontró "{searchQuery}"</p>
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="mt-2 text-emerald-600 text-sm font-medium hover:underline"
+                >
+                  Limpiar búsqueda
+                </button>
+              </div>
             ) : (
-              savers.map(saver => {
+              filteredSavers.map(saver => {
                 const totalSaved = saver.months.reduce((acc, m) => acc + (m.q1_paid ? Number(saver.bi_weekly_amount) : 0) + (m.q2_paid ? Number(saver.bi_weekly_amount) : 0), 0);
 
                 const eligibility = checkLoanEligibilityLocal(saver);
